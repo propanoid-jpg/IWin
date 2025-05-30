@@ -1,53 +1,46 @@
 --[[
 #######################################
-# dmgST by Atreyyo @ VanillaGaming.org #
+# IWin by Atreyyo @ VanillaGaming.org #
+# Forked by Bear-LB @ github.com #
 #######################################
 ]]
 --
-require("basicfunctions")
-require("dmgST")
-require("dmgAOE")
-require("tankST")
-require("tankAOE")
+IWin = IWin or {}
 
-dmgST = CreateFrame("frame", nil, UIParent)
-dmgST.t = CreateFrame("GameTooltip", "dmgST_T", UIParent, "GameTooltipTemplate")
-dmgST_Settings = {
+IWinFrame = CreateFrame("frame", nil, UIParent)
+IWinFrame.t = CreateFrame("GameTooltip", "IWin_T", UIParent, "GameTooltipTemplate")
+IWin_Settings = {
 	["dodge"] = 0,
 }
 
-dmgST:RegisterEvent("CHAT_MSG_COMBAT_SELF_MISSES")
-dmgST:RegisterEvent("CHAT_MSG_SPELL_DAMAGESHIELDS_ON_SELF")
-dmgST:RegisterEvent("ADDON_LOADED")
-dmgST:SetScript("OnEvent", function()
-	if event == "ADDON_LOADED" and arg1 == "dmgST" then
+IWinFrame:RegisterEvent("CHAT_MSG_COMBAT_SELF_MISSES")
+IWinFrame:RegisterEvent("CHAT_MSG_SPELL_DAMAGESHIELDS_ON_SELF")
+IWinFrame:RegisterEvent("ADDON_LOADED")
+IWinFrame:SetScript("OnEvent", function()
+	if event == "ADDON_LOADED" and arg1 == "IWin" then
 		DEFAULT_CHAT_FRAME:AddMessage("|cff0066ff¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯|r")
 		DEFAULT_CHAT_FRAME:AddMessage(
-			"|cff0066ff dmgST system loaded, make some macros containg either of these commands:|r"
+			"|cff0066ff IWin system loaded, make some macros containg either of these commands:|r"
 		)
 		DEFAULT_CHAT_FRAME:AddMessage("|cff0066ff dmgst, /dmgaoe, /tankst, /tankaoe !|r")
 		DEFAULT_CHAT_FRAME:AddMessage("|cff0066ff¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯|r")
-		dmgST:UnregisterEvent("ADDON_LOADED")
+		IWinFrame:UnregisterEvent("ADDON_LOADED")
 	elseif event == "CHAT_MSG_COMBAT_SELF_MISSES" then
 		if string.find(arg1, "dodge") then
-			dmgST_Settings["dodge"] = GetTime()
+			IWin_Settings["dodge"] = GetTime()
 		end
 	elseif event == "CHAT_MSG_SPELL_DAMAGESHIELDS_ON_SELF" then
 		if string.find(arg1, "dodge") then
-			dmgST_Settings["dodge"] = GetTime()
+			IWin_Settings["dodge"] = GetTime()
 		end
 	end
 end)
 
-SlashCmdList["DMGST_SLASH"] = dmgST.DoShit
+SlashCmdList["DMGST_SLASH"] = IWin.dmgST
 SLASH_DMGST_SLASH1 = "/dmgst"
-SLASH_DMGST_SLASH2 = "/DMGST"
-SlashCmdList["DMGAOE_SLASH"] = dmgAOE.DoShit
+SlashCmdList["DMGAOE_SLASH"] = IWin.dmgAOE
 SLASH_DMGAOE_SLASH1 = "/dmgaoe"
-SLASH_DMGAOE_SLASH2 = "/DMGAOE"
-SlashCmdList["TANKST_SLASH"] = tankST.DoShit
+SlashCmdList["TANKST_SLASH"] = IWin.tankST
 SLASH_TANKST_SLASH1 = "/tankst"
-SLASH_TANKST_SLASH2 = "/TANKST"
-SlashCmdList["TANKAOE_SLASH"] = tankAOE.DoShit
+SlashCmdList["TANKAOE_SLASH"] = IWin.tankAOE
 SLASH_TANKAOE_SLASH1 = "/tankaoe"
-SLASH_TANKAOE_SLASH2 = "/TANKAOE"

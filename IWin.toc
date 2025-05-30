@@ -2,4 +2,10 @@
 ## Title: IWin
 ## Notes: One button to rule them all!
 ## SavedVariables: 
+
+basicfunctions.lua
+dmgST.lua
+dmgAOE.lua
+tankST.lua
+tankAOE.lua
 IWin.lua

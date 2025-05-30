@@ -1,3 +1,8 @@
+-- Debug: Confirm file loading
+DEFAULT_CHAT_FRAME:AddMessage("IWin: Loading basicfunctions.lua...")
+
+IWin = IWin or {}
+
 function IWin:GetBuff(name, buff, stacks)
 	local a = 1
 	while UnitBuff(name, a) do

@@ -1,4 +1,6 @@
-function dmgAOE:DoShit()
+IWin = IWin or {}
+
+function IWin:dmgAOE()
 	local c = CastSpellByName
 	if UnitClass("player") == "Warrior" then
 		if not IWin_Settings["AttackSlot"] then

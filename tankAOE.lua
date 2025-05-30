@@ -1,4 +1,6 @@
-function tankAOE:DoShit()
+local IWin = IWin or {}
+
+function IWin:tankAOE()
 	local c = CastSpellByName
 	if UnitClass("player") == "Warrior" then
 		if not IWin_Settings["AttackSlot"] then
