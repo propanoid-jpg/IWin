@@ -57,10 +57,10 @@ function IWin:tankAOE()
             c("Last Stand")
             return
         end
-        if IWin:GetSpell("Taunt") and not IWin:OnCooldown("Taunt") and TargetUnit("targettarget") ~= "Sesshi" then
-            c("Taunt")
-            return
-        end
+        -- if IWin:GetSpell("Taunt") and not IWin:OnCooldown("Taunt") and TargetUnit("targettarget") ~= "Sesshi" then
+        --     c("Taunt")
+        --     return
+        -- end
         if IWin:GetSpell("Thunder Clap") and not IWin:OnCooldown("Thunder Clap") and UnitMana("player") > 19 then
             c("Thunder Clap")
             return

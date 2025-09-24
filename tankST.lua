@@ -57,13 +57,13 @@ function IWin:tankST()
             c("Last Stand")
             return
         end
-        if IWin:GetSpell("Taunt") and not IWin:OnCooldown("Taunt") and TargetUnit("targettarget") ~= "Sesshi" then
-            c("Taunt")
-            return
-        elseif IWin:GetSpell("Mocking Blow") and not IWin:OnCooldown("Mocking Blow") and TargetUnit("targettarget") ~= "Sesshi" and UnitMana("player") > 9 then
-            c("Mocking Blow")
-            return
-        end
+        -- if IWin:GetSpell("Taunt") and not IWin:OnCooldown("Taunt") and TargetUnit("targettarget") ~= "Sesshi" then
+        --     c("Taunt")
+        --     return
+        -- elseif IWin:GetSpell("Mocking Blow") and not IWin:OnCooldown("Mocking Blow") and TargetUnit("targettarget") ~= "Sesshi" and UnitMana("player") > 9 then
+        --     c("Mocking Blow")
+        --     return
+        -- end
         c("Defensive Stance")
         if not IWin:GetBuff("target", "Sunder Armor") then
         else

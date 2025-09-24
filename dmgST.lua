@@ -40,10 +40,10 @@ function IWin:dmgST()
             c("Execute")
             return
         end
-        if UnitIsPlayer("target") and not IWin:GetBuff("target", "Hamstring") then
-            c("Hamstring")
-            return
-        end
+        -- if UnitIsPlayer("target") and not IWin:GetBuff("target", "Hamstring") then
+        --     c("Hamstring")
+        --     return
+        -- end
         --[[
         if GetTime() - IWin_Settings["dodge"] < 5 then
             if IWin:GetSpell("Overpower") and not IWin:OnCooldown("Overpower") and UnitMana("player") < 30 and UnitMana("player") > 4 then
