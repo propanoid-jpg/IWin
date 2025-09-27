@@ -83,6 +83,10 @@ function IWin:dmgST()
             end
         elseif IWin:GetSpell("Heroic Strike") and UnitMana("player") > 29 then
             c("Heroic Strike")
+            return
+        elseif not IWin:OnCooldown("Rend") and not IWin:GetBuff("target", "Rend") and UnitMana("player") > 9 then
+            c("Rend")
+            return
         end
     end
 end

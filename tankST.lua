@@ -127,6 +127,10 @@ function IWin:tankST()
             c("Bloodrage")
             return
         end
+        if not IWin:OnCooldown("Rend") and not IWin:GetBuff("target", "Rend") and UnitMana("player") > 9 then
+            c("Rend")
+            return
+        end
         if IWin:GetSpell("Bloodthirst") and not IWin:OnCooldown("Bloodthirst") and UnitMana("player") > 29 then
             c("Bloodthirst")
             return
