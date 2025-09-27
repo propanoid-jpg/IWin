@@ -84,9 +84,12 @@ function IWin:dmgST()
         elseif IWin:GetSpell("Heroic Strike") and UnitMana("player") > 29 then
             c("Heroic Strike")
             return
-        elseif not IWin:OnCooldown("Rend") and not IWin:GetBuff("target", "Rend") and UnitMana("player") > 9 then
-            c("Rend")
-            return
+        elseif not IWin:OnCooldown("Rend") and UnitMana("player") > 9 then
+            if not IWin:GetBuff("target", "Rend") or IWin:CheckDebuffDuration("Rend", 21, 5) then
+                c("Rend")
+                IWin_Settings.DebuffTracker["Rend"] = { startTime = GetTime(), duration = 21 }
+                return
+            end
         end
     end
 end

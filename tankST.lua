@@ -85,14 +85,20 @@ function IWin:tankST()
         if IWin:GetSpell("Revenge") and not IWin:OnCooldown("Revenge") and UnitMana("player") > 4 then
             c("Revenge")
         end
-        if IWin:GetSpell("Thunder Clap") and not IWin:OnCooldown("Thunder Clap") and not IWin:GetBuff("target", "Thunder Clap") and not IWin:GetBuff("target", "Thunderfury") and UnitMana("player") > 39 then
-            c("Thunder Clap")
-            return
+        if IWin:GetSpell("Thunder Clap") and not IWin:OnCooldown("Thunder Clap") and not IWin:GetBuff("target", "Thunderfury") and UnitMana("player") > 39 then
+            if not IWin:GetBuff("target", "Thunder Clap") or IWin:CheckDebuffDuration("Thunder Clap", 26, 5) then
+                c("Thunder Clap")
+                IWin_Settings.DebuffTracker["Thunder Clap"] = { startTime = GetTime(), duration = 26 }
+                return
+            end
         end
         -- Change UnitMana value if not have 5 set Conqueror
-        if IWin:GetSpell("Demoralizing Shout") and not IWin:OnCooldown("Demoralizing Shout") and not IWin:GetBuff("target", "Demoralizing Shout") and UnitMana("player") > 25 then
-            c("Demoralizing Shout")
-            return
+        if IWin:GetSpell("Demoralizing Shout") and not IWin:OnCooldown("Demoralizing Shout") and UnitMana("player") > 25 then
+            if not IWin:GetBuff("target", "Demoralizing Shout") or IWin:CheckDebuffDuration("Demoralizing Shout", 30, 3) then
+                c("Demoralizing Shout")
+                IWin_Settings.DebuffTracker["Demoralizing Shout"] = { startTime = GetTime(), duration = 30 }
+                return
+            end
         end
         if IWin:GetSpell("Concussion Blow") and not IWin:OnCooldown("Concussion Blow") and UnitHealth("target") <= 20000 and UnitMana("player") > 34 then
             c("Concussion Blow")
@@ -127,9 +133,12 @@ function IWin:tankST()
             c("Bloodrage")
             return
         end
-        if not IWin:OnCooldown("Rend") and not IWin:GetBuff("target", "Rend") and UnitMana("player") > 9 then
-            c("Rend")
-            return
+        if not IWin:OnCooldown("Rend") and UnitMana("player") > 9 then
+            if not IWin:GetBuff("target", "Rend") or IWin:CheckDebuffDuration("Rend", 21, 5) then
+                c("Rend")
+                IWin_Settings.DebuffTracker["Rend"] = { startTime = GetTime(), duration = 21 }
+                return
+            end
         end
         if IWin:GetSpell("Bloodthirst") and not IWin:OnCooldown("Bloodthirst") and UnitMana("player") > 29 then
             c("Bloodthirst")
