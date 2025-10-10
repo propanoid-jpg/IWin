@@ -1,20 +1,6 @@
 IWin = IWin or {}
 
---[[
-    DPS Single Target Rotation Priority:
-    1. Charge (out of combat, 8-25 yards)
-    2. Overpower (on dodge proc within 5 seconds)
-    3. Execute (target below 20% health)
-    4. Battle Shout (if missing buff)
-    5. Bloodrage (rage < 30)
-    6. Bloodthirst (30+ rage, Fury spec)
-    7. Mortal Strike (30+ rage, Arms spec)
-    8. Whirlwind (30+ rage, melee range)
-    9. Heroic Strike (30+ rage)
-    10. Rend (if missing or < 5s remaining)
-]]
-
-function IWin:dmgST()
+function IWin:dmgAOE()
     -- Error handling: validate IWin_Settings exists
     if not IWin_Settings or type(IWin_Settings) ~= "table" then
         DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[IWin Error] IWin_Settings not initialized|r")
@@ -55,18 +41,64 @@ function IWin:dmgST()
             return
         end
 
-        -- Enable auto-attack if not already attacking
+        -- Use common auto-attack handler
         IWin:HandleAutoAttack()
 
-        -- PRIORITY 1: Charge if out of combat and in range (8-25 yards with SuperWOW)
+        -- Use common charge handler
         if IWin:HandleCharge() then
+            return
+        end
+
+        -- Use common battle shout handler (out of combat)
+        if not UnitAffectingCombat("player") and IWin:HandleBattleShout(false) then
+            return
+        end
+
+        -- Sweeping Strikes (Battle Stance) - highest priority AOE ability
+        if IWin:GetSpell("Sweeping Strikes") and not IWin:OnCooldown("Sweeping Strikes") and UnitMana("player") >= IWin_Settings["RageSweepingMin"] then
+            IWin:SwitchStance("Battle Stance")
+            c("Sweeping Strikes")
+            return
+        end
+
+        -- Switch to Berserker Stance for Whirlwind if we have enough rage
+        if IWin:GetSpell("Whirlwind") and not IWin:OnCooldown("Whirlwind") and UnitMana("player") >= IWin_Settings["RageWhirlwindMin"] then
+            if CheckInteractDistance("target", IWin.CONSTANTS.INTERACT_DISTANCE_MELEE) ~= nil then
+                IWin:SwitchStance("Berserker Stance")
+                c("Whirlwind")
+                return
+            end
+        end
+
+        -- Stay in Berserker Stance for general DPS (only switch if Sweeping Strikes buff is active)
+        local _, _, isBattleStance = GetShapeshiftFormInfo(1)
+        if isBattleStance and not IWin:GetBuff("player", "Sweeping Strikes") then
+            -- Switch to Berserker if we're in Battle and Sweeping Strikes isn't active
+            IWin:SwitchStance("Berserker Stance")
+        end
+
+        -- Use common bloodrage handler
+        if IWin:HandleBloodrage() then
+            return
+        end
+
+        -- Use offensive trinkets on cooldown
+        IWin:UseTrinkets(true)
+
+        -- Bloodthirst (if Fury spec)
+        if IWin:GetSpell("Bloodthirst") and not IWin:OnCooldown("Bloodthirst") and UnitMana("player") >= IWin_Settings["RageBloodthirstMin"] then
+            c("Bloodthirst")
+            return
+        -- Mortal Strike (if Arms spec)
+        elseif IWin:GetSpell("Mortal Strike") and not IWin:OnCooldown("Mortal Strike") and UnitMana("player") >= IWin_Settings["RageMortalStrikeMin"] then
+            c("Mortal Strike")
             return
         end
 
         -- Log boss detection changes (no spam)
         IWin:LogBossDetection()
 
-        -- PRIORITY 3: Execute phase (boss-aware threshold)
+        -- Execute phase (boss-aware threshold)
         local isBoss = IWin:IsBoss()
         local executeThreshold = isBoss and IWin_Settings["ExecuteThresholdBoss"] or IWin_Settings["ExecuteThresholdTrash"]
         if (UnitHealth("target") / UnitHealthMax("target")) * 100 <= executeThreshold and UnitMana("player") >= IWin_Settings["RageExecuteMin"] then
@@ -75,43 +107,7 @@ function IWin:dmgST()
             return
         end
 
-        -- PRIORITY 4: Battle Shout if buff is missing (out of combat)
-        if not UnitAffectingCombat("player") and IWin:HandleBattleShout(false) then
-            return
-        end
-
-        -- Switch to Berserker Stance for DPS when not in execute range
-        local _, _, isBattleStance = GetShapeshiftFormInfo(1)
-        if isBattleStance and (UnitHealth("target") / UnitHealthMax("target")) * 100 > IWin_Settings["ExecuteThreshold"] then
-            IWin:SwitchStance("Berserker Stance")
-        end
-
-        -- PRIORITY 5: Bloodrage for rage generation
-        if IWin:HandleBloodrage() then
-            return
-        end
-
-        -- Use offensive trinkets on cooldown
-        IWin:UseTrinkets(true)
-
-        -- PRIORITY 6: Bloodthirst (Fury spec main attack, 6s CD)
-        if IWin:GetSpell("Bloodthirst") and not IWin:OnCooldown("Bloodthirst") and UnitMana("player") >= IWin_Settings["RageBloodthirstMin"] then
-            c("Bloodthirst")
-            return
-        -- PRIORITY 7: Mortal Strike (Arms spec main attack, 6s CD)
-        elseif IWin:GetSpell("Mortal Strike") and not IWin:OnCooldown("Mortal Strike") and UnitMana("player") >= IWin_Settings["RageMortalStrikeMin"] then
-            c("Mortal Strike")
-            return
-        -- PRIORITY 8: Whirlwind (10s CD, requires melee range)
-        elseif IWin:GetSpell("Whirlwind") and not IWin:OnCooldown("Whirlwind") and UnitMana("player") >= IWin_Settings["RageWhirlwindMin"] then
-            if CheckInteractDistance("target", IWin.CONSTANTS.INTERACT_DISTANCE_MELEE) ~= nil then
-                IWin:SwitchStance("Berserker Stance")
-                c("Whirlwind")
-                return
-            end
-        end
-
-        -- PRIORITY 9: Rend (DoT, skip on trash if configured)
+        -- Rend: maintain DoT (skip on trash if configured)
         if IWin_Settings["AutoRend"] and UnitMana("player") >= IWin_Settings["RageRendMin"] then
             local shouldApplyRend = isBoss or not IWin_Settings["SkipRendOnTrash"]
             if shouldApplyRend then
@@ -123,7 +119,15 @@ function IWin:dmgST()
             end
         end
 
-        -- PRIORITY 10: Heroic Strike (smart queueing with SuperWOW)
+        -- Cleave - primary AOE rage dump (smart queueing with SuperWOW)
+        if IWin:GetSpell("Cleave") and UnitMana("player") >= IWin_Settings["RageCleaveMin"] then
+            if IWin:ShouldQueueHeroicStrike() then
+                c("Cleave")
+                return
+            end
+        end
+
+        -- Heroic Strike as last resort if high rage (smart queueing with SuperWOW)
         if IWin:GetSpell("Heroic Strike") and UnitMana("player") >= IWin_Settings["RageHeroicMin"] then
             if IWin:ShouldQueueHeroicStrike() then
                 c("Heroic Strike")

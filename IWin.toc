@@ -1,9 +1,12 @@
 ## Interface: 11200
 ## Title: IWin
-## Notes: One button to rule them all!
-## SavedVariables: 
+## Version: 2.6.0
+## Notes: One button warrior rotations - SuperWOW Enhanced (Boss Detection, AOE Counting, Range Checking, Auto-Features)
+## Author: Atreyyo, Bear-LB, Claude Enhanced
+## SavedVariables: IWin_Settings
+IWin.lua
 dmgST.lua
-# dmgAOE.lua
+dmgAOE.lua
 tankST.lua
 tankAOE.lua
-IWin.lua
+IWinUI.lua
