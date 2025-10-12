@@ -95,17 +95,14 @@ function IWin:dmgAOE()
             return
         end
 
-        -- Log boss detection changes (no spam)
-        IWin:LogBossDetection()
-
-        -- Execute phase (boss-aware threshold)
-        local isBoss = IWin:IsBoss()
-        local executeThreshold = isBoss and IWin_Settings["ExecuteThresholdBoss"] or IWin_Settings["ExecuteThresholdTrash"]
-        if (UnitHealth("target") / UnitHealthMax("target")) * 100 <= executeThreshold and UnitMana("player") >= IWin_Settings["RageExecuteMin"] then
+        -- Execute phase (20% threshold)
+        if (UnitHealth("target") / UnitHealthMax("target")) * 100 <= 20 and UnitMana("player") >= IWin_Settings["RageExecuteMin"] then
             IWin:SwitchStance("Berserker Stance")
             c("Execute")
             return
         end
+
+        local isBoss = IWin:IsBoss()
 
         -- Rend: maintain DoT (skip on trash if configured)
         if IWin_Settings["AutoRend"] and UnitMana("player") >= IWin_Settings["RageRendMin"] then

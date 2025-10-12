@@ -375,6 +375,16 @@ function IWin.UI:CreateTogglesTab()
         "Smart Heroic Strike (SuperWOW)",
         "Only queue Heroic Strike/Cleave near swing timer to avoid wasting rage. Requires SuperWOW for swing detection.")
 
+    -- AOE Section
+    local aoeTitle = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    aoeTitle:SetPoint("TOPLEFT", content, "TOPLEFT", 260, -190)
+    aoeTitle:SetText("AOE Tanking")
+    aoeTitle:SetTextColor(1, 0.5, 0)
+
+    self:CreateCheckbox(content, "Battle Shout AOE Mode", "BattleShoutAOEMode", 260, -210,
+        "Battle Shout AOE Mode",
+        "Spam Battle Shout in tankAOE rotation even when buff is active. This is the 1.12 meta for AOE threat generation. Turn OFF to only cast when buff is missing.")
+
     -- Info text
     local info = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     info:SetPoint("BOTTOM", content, "BOTTOM", 0, 20)
@@ -502,9 +512,6 @@ function IWin.UI:CreateHealthTab()
 
     -- Centered sliders
     local y = -80
-    self:CreateSlider(content, "Execute Threshold", "ExecuteThreshold", 1, 99, 120, y, "%",
-        "When target health drops below this percentage, start using Execute. Lower values save Execute for final phase. Default: 20%")
-    y = y - 80
     self:CreateSlider(content, "Last Stand Threshold", "LastStandThreshold", 1, 99, 120, y, "%",
         "Emergency ability that triggers when YOUR health drops below this percentage. Higher values = more defensive. Default: 20%")
     y = y - 80
@@ -514,7 +521,7 @@ function IWin.UI:CreateHealthTab()
     -- Info
     local info = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     info:SetPoint("BOTTOM", content, "BOTTOM", 0, 40)
-    info:SetText("Execute triggers when target health drops below threshold")
+    info:SetText("Execute is hardcoded at 20% health threshold")
     info:SetTextColor(0.7, 0.7, 0.7)
 
     local info2 = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -570,16 +577,8 @@ function IWin.UI:CreateBossTab()
     desc:SetText("Different thresholds for bosses vs trash mobs")
     desc:SetTextColor(0.7, 0.7, 0.7)
 
-    -- Execute thresholds
-    local y = -80
-    self:CreateSlider(content, "Boss Execute Threshold", "ExecuteThresholdBoss", 1, 99, 120, y, "%",
-        "Execute when boss health drops below this percentage. Bosses are detected as worldboss, skull level, or elite skull. Default: 20%")
-    y = y - 70
-    self:CreateSlider(content, "Trash Execute Threshold", "ExecuteThresholdTrash", 1, 99, 120, y, "%",
-        "Execute when normal mob health drops below this percentage. More aggressive than boss threshold. Default: 30%")
-
     -- Sunder stacks
-    y = y - 70
+    local y = -80
     self:CreateSlider(content, "Boss Sunder Stacks", "SunderStacksBoss", 1, 5, 120, y, "",
         "Target Sunder Armor stacks to maintain on bosses. Full armor reduction requires 5 stacks. Default: 5")
     y = y - 70
@@ -929,6 +928,7 @@ function IWin.UI:ResetDefaults()
     IWin_Settings["AutoStance"] = true
     IWin_Settings["AutoShieldBlock"] = true
     IWin_Settings["SkipThunderClapWithThunderfury"] = true
+    IWin_Settings["BattleShoutAOEMode"] = true
 
     -- SuperWOW toggles
     IWin_Settings["AutoInterrupt"] = true
@@ -961,13 +961,10 @@ function IWin.UI:ResetDefaults()
     IWin_Settings["RageShieldBlockMin"] = 10
 
     -- Health thresholds
-    IWin_Settings["ExecuteThreshold"] = 20
     IWin_Settings["LastStandThreshold"] = 20
     IWin_Settings["ConcussionBlowThreshold"] = 30
 
     -- Boss detection
-    IWin_Settings["ExecuteThresholdBoss"] = 20
-    IWin_Settings["ExecuteThresholdTrash"] = 30
     IWin_Settings["SunderStacksBoss"] = 5
     IWin_Settings["SunderStacksTrash"] = 3
     IWin_Settings["SkipRendOnTrash"] = true

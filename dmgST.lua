@@ -63,13 +63,8 @@ function IWin:dmgST()
             return
         end
 
-        -- Log boss detection changes (no spam)
-        IWin:LogBossDetection()
-
-        -- PRIORITY 3: Execute phase (boss-aware threshold)
-        local isBoss = IWin:IsBoss()
-        local executeThreshold = isBoss and IWin_Settings["ExecuteThresholdBoss"] or IWin_Settings["ExecuteThresholdTrash"]
-        if (UnitHealth("target") / UnitHealthMax("target")) * 100 <= executeThreshold and UnitMana("player") >= IWin_Settings["RageExecuteMin"] then
+        -- PRIORITY 3: Execute phase (20% threshold)
+        if (UnitHealth("target") / UnitHealthMax("target")) * 100 <= 20 and UnitMana("player") >= IWin_Settings["RageExecuteMin"] then
             IWin:SwitchStance("Berserker Stance")
             c("Execute")
             return
@@ -82,9 +77,11 @@ function IWin:dmgST()
 
         -- Switch to Berserker Stance for DPS when not in execute range
         local _, _, isBattleStance = GetShapeshiftFormInfo(1)
-        if isBattleStance and (UnitHealth("target") / UnitHealthMax("target")) * 100 > IWin_Settings["ExecuteThreshold"] then
+        if isBattleStance and (UnitHealth("target") / UnitHealthMax("target")) * 100 > 20 then
             IWin:SwitchStance("Berserker Stance")
         end
+
+        local isBoss = IWin:IsBoss()
 
         -- PRIORITY 5: Bloodrage for rage generation
         if IWin:HandleBloodrage() then

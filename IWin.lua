@@ -22,6 +22,7 @@ IWin.CONSTANTS = {
     SUNDER_ARMOR_DURATION = 30,
     THUNDER_CLAP_DURATION = 26,
     DEMO_SHOUT_DURATION = 30,
+    BATTLE_SHOUT_DURATION = 120,
 
     -- Safety limits
     MAX_BUFF_SCAN_ITERATIONS = 40,
@@ -206,6 +207,7 @@ IWinFrame:SetScript("OnEvent", function()
         IWin:InitSetting("AutoStance", true)
         IWin:InitSetting("AutoShieldBlock", true)
         IWin:InitSetting("SkipThunderClapWithThunderfury", true)
+        IWin:InitSetting("BattleShoutAOEMode", true)
 
         -- SuperWOW feature toggles - enable by default if SuperWOW detected
         local superWOWDefault = IWin.superwow and true or false
@@ -238,13 +240,10 @@ IWinFrame:SetScript("OnEvent", function()
         IWin:InitSetting("RageInterruptMin", 10, 0, 100)
 
         -- Health thresholds (1-99)
-        IWin:InitSetting("ExecuteThreshold", 20, 1, 99)
         IWin:InitSetting("LastStandThreshold", 20, 1, 99)
         IWin:InitSetting("ConcussionBlowThreshold", 30, 1, 99)
 
         -- Boss detection specific thresholds
-        IWin:InitSetting("ExecuteThresholdBoss", 20, 1, 99)
-        IWin:InitSetting("ExecuteThresholdTrash", 30, 1, 99)
         IWin:InitSetting("SunderStacksBoss", 5, 1, 5)
         IWin:InitSetting("SunderStacksTrash", 3, 1, 5)
         IWin:InitSetting("SkipRendOnTrash", true)
@@ -307,18 +306,28 @@ IWinFrame:SetScript("OnEvent", function()
         end
 
         -- Target casting detection for interrupts
-        if targetUnit == "target" then
-            if eventType == "START" then
-                IWin_Settings["targetCasting"].isCasting = true
-                IWin_Settings["targetCasting"].isChanneling = false
-                IWin_Settings["targetCasting"].castEndTime = GetTime() + ((castDuration or 0) / 1000)
-            elseif eventType == "CHANNEL" then
-                IWin_Settings["targetCasting"].isCasting = false
-                IWin_Settings["targetCasting"].isChanneling = true
-                IWin_Settings["targetCasting"].castEndTime = GetTime() + ((castDuration or 0) / 1000)
-            elseif eventType == "CAST" or eventType == "FAIL" then
-                IWin_Settings["targetCasting"].isCasting = false
-                IWin_Settings["targetCasting"].isChanneling = false
+        if UnitExists("target") then
+            local _, targetGUID = UnitExists("target")
+
+            -- Only track casts from our current target
+            if casterGUID == targetGUID then
+                if eventType == "START" then
+                    local spellName, spellRank = IWin.superwow.SpellInfo(spellID)
+                    IWin_Settings["targetCasting"].isCasting = true
+                    IWin_Settings["targetCasting"].isChanneling = false
+                    IWin_Settings["targetCasting"].spellName = spellName
+                    IWin_Settings["targetCasting"].castEndTime = GetTime() + ((castDuration or 0) / 1000)
+                elseif eventType == "CHANNEL" then
+                    local spellName, spellRank = IWin.superwow.SpellInfo(spellID)
+                    IWin_Settings["targetCasting"].isCasting = false
+                    IWin_Settings["targetCasting"].isChanneling = true
+                    IWin_Settings["targetCasting"].spellName = spellName
+                    IWin_Settings["targetCasting"].castEndTime = GetTime() + ((castDuration or 0) / 1000)
+                elseif eventType == "CAST" or eventType == "FAIL" then
+                    IWin_Settings["targetCasting"].isCasting = false
+                    IWin_Settings["targetCasting"].isChanneling = false
+                    IWin_Settings["targetCasting"].spellName = nil
+                end
             end
         end
         elseif event == "SPELLS_CHANGED" or event == "LEARNED_SPELL_IN_TAB" then
@@ -1082,7 +1091,7 @@ function IWin:HandleBattleShout(inCombat)
         local rageNeeded = inCombat and IWin_Settings["RageShoutCombatMin"] or IWin_Settings["RageShoutMin"]
 
         if UnitMana("player") >= rageNeeded then
-            if not inCombat or not UnitExists("target") or (UnitHealth("target") / UnitHealthMax("target")) > (IWin_Settings["ExecuteThreshold"] / 100) then
+            if not inCombat or not UnitExists("target") or (UnitHealth("target") / UnitHealthMax("target")) > 0.2 then
                 c("Battle Shout")
                 return true
             end
@@ -1525,7 +1534,7 @@ function IWin:Config(msg)
         DEFAULT_CHAT_FRAME:AddMessage("  Concussion Blow min: " .. IWin_Settings["RageConcussionBlowMin"])
         DEFAULT_CHAT_FRAME:AddMessage("  Shield Block min: " .. IWin_Settings["RageShieldBlockMin"])
         DEFAULT_CHAT_FRAME:AddMessage("|cffff8800Health Thresholds:|r")
-        DEFAULT_CHAT_FRAME:AddMessage("  Execute: " .. IWin_Settings["ExecuteThreshold"] .. "%")
+        DEFAULT_CHAT_FRAME:AddMessage("  Execute: 20% (hardcoded)")
         DEFAULT_CHAT_FRAME:AddMessage("  Last Stand: " .. IWin_Settings["LastStandThreshold"] .. "%")
         DEFAULT_CHAT_FRAME:AddMessage("  Concussion Blow: " .. IWin_Settings["ConcussionBlowThreshold"] .. "%")
         DEFAULT_CHAT_FRAME:AddMessage("|cffff8800Boss Detection:|r")
@@ -1535,8 +1544,6 @@ function IWin:Config(msg)
         else
             DEFAULT_CHAT_FRAME:AddMessage("  Current target: |cff808080No target|r")
         end
-        DEFAULT_CHAT_FRAME:AddMessage("  Boss execute threshold: " .. IWin_Settings["ExecuteThresholdBoss"] .. "%")
-        DEFAULT_CHAT_FRAME:AddMessage("  Trash execute threshold: " .. IWin_Settings["ExecuteThresholdTrash"] .. "%")
         DEFAULT_CHAT_FRAME:AddMessage("  Boss sunder stacks: " .. IWin_Settings["SunderStacksBoss"])
         DEFAULT_CHAT_FRAME:AddMessage("  Trash sunder stacks: " .. IWin_Settings["SunderStacksTrash"])
         DEFAULT_CHAT_FRAME:AddMessage("  Skip Rend on trash: " .. (IWin_Settings["SkipRendOnTrash"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
@@ -1742,18 +1749,6 @@ function IWin:Config(msg)
             end
         else
             DEFAULT_CHAT_FRAME:AddMessage("Rend min rage: " .. IWin_Settings["RageRendMin"])
-        end
-    elseif args[1] == "execute" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 99 then
-                IWin_Settings["ExecuteThreshold"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Execute threshold set to " .. value .. "%|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-99|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Execute threshold: " .. IWin_Settings["ExecuteThreshold"] .. "%")
         end
     elseif args[1] == "laststand" then
         if args[2] then
@@ -2022,30 +2017,6 @@ function IWin:Config(msg)
             end
         else
             DEFAULT_CHAT_FRAME:AddMessage("AOE target threshold: " .. IWin_Settings["AOETargetThreshold"] .. " enemies")
-        end
-    elseif args[1] == "executeboss" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 99 then
-                IWin_Settings["ExecuteThresholdBoss"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Boss execute threshold set to " .. value .. "%|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-99|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Boss execute threshold: " .. IWin_Settings["ExecuteThresholdBoss"] .. "%")
-        end
-    elseif args[1] == "executetrash" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 99 then
-                IWin_Settings["ExecuteThresholdTrash"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Trash execute threshold set to " .. value .. "%|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-99|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Trash execute threshold: " .. IWin_Settings["ExecuteThresholdTrash"] .. "%")
         end
     elseif args[1] == "sunderboss" then
         if args[2] then
