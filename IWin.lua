@@ -1389,6 +1389,101 @@ function IWin:UseTrinkets(onlyOffensiveTrinkets)
     self:UseTrinketSlot(IWin_Settings["Trinket1Slot"], onlyOffensiveTrinkets)
 end
 
+-- Command definition table: maps command names to their handlers
+-- This replaces the massive if/elseif chain with a data-driven approach
+IWin.Commands = {
+	-- Boolean toggles
+	charge = {type = "boolean", setting = "AutoCharge", label = "Auto-charge"},
+	shout = {type = "boolean", setting = "AutoBattleShout", label = "Auto-battle shout"},
+	bloodrage = {type = "boolean", setting = "AutoBloodrage", label = "Auto-bloodrage"},
+	trinkets = {type = "boolean", setting = "AutoTrinkets", label = "Auto-trinkets"},
+	rend = {type = "boolean", setting = "AutoRend", label = "Auto-rend"},
+	attack = {type = "boolean", setting = "AutoAttack", label = "Auto-attack"},
+	stance = {type = "boolean", setting = "AutoStance", label = "Auto-stance switching"},
+	shieldblock = {type = "boolean", setting = "AutoShieldBlock", label = "Auto-shield block"},
+	skipthunderclap = {type = "boolean", setting = "SkipThunderClapWithThunderfury", label = "Skip Thunder Clap with Thunderfury"},
+	revenge = {type = "boolean", setting = "AutoRevenge", label = "Auto-revenge (Revenge must be on action bars)"},
+	interrupt = {type = "boolean", setting = "AutoInterrupt", label = "Auto-interrupt (SuperWOW only)"},
+	smarths = {type = "boolean", setting = "SmartHeroicStrike", label = "Smart Heroic Strike (SuperWOW only)"},
+	skiprendtrash = {type = "boolean", setting = "SkipRendOnTrash", label = "Skip Rend on trash"},
+
+	-- Rage thresholds (0-100)
+	chargemax = {type = "numeric", setting = "RageChargeMax", min = 0, max = 100, label = "Charge max rage"},
+	bloodragemin = {type = "numeric", setting = "RageBloodrageMin", min = 0, max = 100, label = "Bloodrage min rage"},
+	bloodthirstmin = {type = "numeric", setting = "RageBloodthirstMin", min = 0, max = 100, label = "Bloodthirst min rage"},
+	mortalstrikemin = {type = "numeric", setting = "RageMortalStrikeMin", min = 0, max = 100, label = "Mortal Strike min rage"},
+	whirlwindmin = {type = "numeric", setting = "RageWhirlwindMin", min = 0, max = 100, label = "Whirlwind min rage"},
+	sweepingmin = {type = "numeric", setting = "RageSweepingMin", min = 0, max = 100, label = "Sweeping Strikes min rage"},
+	heroicmin = {type = "numeric", setting = "RageHeroicMin", min = 0, max = 100, label = "Heroic Strike min rage"},
+	cleavemin = {type = "numeric", setting = "RageCleaveMin", min = 0, max = 100, label = "Cleave min rage"},
+	shoutmin = {type = "numeric", setting = "RageShoutMin", min = 0, max = 100, label = "Battle Shout min rage"},
+	shoutcombatmin = {type = "numeric", setting = "RageShoutCombatMin", min = 0, max = 100, label = "Battle Shout min rage (combat)"},
+	overpowermin = {type = "numeric", setting = "RageOverpowerMin", min = 0, max = 100, label = "Overpower min rage"},
+	executemin = {type = "numeric", setting = "RageExecuteMin", min = 0, max = 100, label = "Execute min rage"},
+	rendmin = {type = "numeric", setting = "RageRendMin", min = 0, max = 100, label = "Rend min rage"},
+	interruptmin = {type = "numeric", setting = "RageInterruptMin", min = 0, max = 100, label = "Interrupt min rage"},
+
+	-- Tank rage thresholds
+	shieldslammin = {type = "numeric", setting = "RageShieldSlamMin", min = 0, max = 100, label = "Shield Slam min rage"},
+	revengemin = {type = "numeric", setting = "RageRevengeMin", min = 0, max = 100, label = "Revenge min rage"},
+	thunderclapmin = {type = "numeric", setting = "RageThunderClapMin", min = 0, max = 100, label = "Thunder Clap min rage"},
+	demoshoutmin = {type = "numeric", setting = "RageDemoShoutMin", min = 0, max = 100, label = "Demo Shout min rage"},
+	sundermin = {type = "numeric", setting = "RageSunderMin", min = 0, max = 100, label = "Sunder Armor min rage"},
+	concussionblowmin = {type = "numeric", setting = "RageConcussionBlowMin", min = 0, max = 100, label = "Concussion Blow min rage"},
+	shieldblockmin = {type = "numeric", setting = "RageShieldBlockMin", min = 0, max = 100, label = "Shield Block min rage"},
+
+	-- Health thresholds (1-99)
+	laststand = {type = "numeric", setting = "LastStandThreshold", min = 1, max = 99, label = "Last Stand threshold", suffix = "%"},
+	concussionblow = {type = "numeric", setting = "ConcussionBlowThreshold", min = 1, max = 99, label = "Concussion Blow threshold", suffix = "%"},
+
+	-- Debuff refresh timings
+	refreshrend = {type = "numeric", setting = "RefreshRend", min = 1, max = 20, label = "Rend refresh time", suffix = "s"},
+	refreshsunder = {type = "numeric", setting = "RefreshSunder", min = 1, max = 29, label = "Sunder refresh time", suffix = "s"},
+	refreshthunder = {type = "numeric", setting = "RefreshThunderClap", min = 1, max = 25, label = "Thunder Clap refresh time", suffix = "s"},
+	refreshdemo = {type = "numeric", setting = "RefreshDemoShout", min = 1, max = 29, label = "Demo Shout refresh time", suffix = "s"},
+
+	-- Boss detection
+	sunderboss = {type = "numeric", setting = "SunderStacksBoss", min = 1, max = 5, label = "Boss sunder stacks"},
+	sundertrash = {type = "numeric", setting = "SunderStacksTrash", min = 1, max = 5, label = "Trash sunder stacks"},
+
+	-- Other numeric settings
+	throttle = {type = "numeric", setting = "RotationThrottle", min = 0.05, max = 1.0, label = "Rotation throttle", suffix = " seconds"},
+	opwindow = {type = "numeric", setting = "OverpowerWindow", min = 1, max = 10, label = "Overpower window", suffix = "s"},
+	sunderstacks = {type = "numeric", setting = "SunderStacks", min = 1, max = 5, label = "Sunder stack target"},
+	aoethreshold = {type = "numeric", setting = "AOETargetThreshold", min = 2, max = 10, label = "AOE target threshold", suffix = " enemies"}
+}
+
+-- Generic handler for boolean settings
+function IWin:HandleBooleanCommand(cmd, value)
+	if value == "on" then
+		IWin_Settings[cmd.setting] = true
+		DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00" .. cmd.label .. " enabled|r")
+	elseif value == "off" then
+		IWin_Settings[cmd.setting] = false
+		DEFAULT_CHAT_FRAME:AddMessage("|cffff0000" .. cmd.label .. " disabled|r")
+	else
+		local status = IWin_Settings[cmd.setting] and "|cff00ff00ON|r" or "|cffff0000OFF|r"
+		DEFAULT_CHAT_FRAME:AddMessage(cmd.label .. " is: " .. status)
+	end
+end
+
+-- Generic handler for numeric settings
+function IWin:HandleNumericCommand(cmd, value)
+	if value then
+		local num = tonumber(value)
+		if num and num >= cmd.min and num <= cmd.max then
+			IWin_Settings[cmd.setting] = num
+			local suffix = cmd.suffix or ""
+			DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00" .. cmd.label .. " set to " .. num .. suffix .. "|r")
+		else
+			DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use " .. cmd.min .. "-" .. cmd.max .. "|r")
+		end
+	else
+		local suffix = cmd.suffix or ""
+		DEFAULT_CHAT_FRAME:AddMessage(cmd.label .. ": " .. IWin_Settings[cmd.setting] .. suffix)
+	end
+end
+
 -- Configuration and help commands
 function IWin:Config(msg)
     local args = {}
@@ -1396,6 +1491,7 @@ function IWin:Config(msg)
         table.insert(args, string.lower(word))
     end
 
+	-- Handle special commands first (help, status, debug, cache, loglevel, ui, config)
     if not args[1] or args[1] == "help" then
         DEFAULT_CHAT_FRAME:AddMessage("|cff0066ffIWin Configuration Commands:|r")
         DEFAULT_CHAT_FRAME:AddMessage("|cffff8800Toggles:|r")
@@ -1461,39 +1557,17 @@ function IWin:Config(msg)
         DEFAULT_CHAT_FRAME:AddMessage("/iwin debug - Show debug information")
         DEFAULT_CHAT_FRAME:AddMessage("/iwin ui - Open graphical configuration interface")
         DEFAULT_CHAT_FRAME:AddMessage("/iwin config - Same as /iwin ui")
-    elseif args[1] == "charge" then
-        if args[2] == "on" then
-            IWin_Settings["AutoCharge"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Auto-charge enabled|r")
-        elseif args[2] == "off" then
-            IWin_Settings["AutoCharge"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Auto-charge disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Auto-charge is: " .. (IWin_Settings["AutoCharge"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "shout" then
-        if args[2] == "on" then
-            IWin_Settings["AutoBattleShout"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Auto-battle shout enabled|r")
-        elseif args[2] == "off" then
-            IWin_Settings["AutoBattleShout"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Auto-battle shout disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Auto-battle shout is: " .. (IWin_Settings["AutoBattleShout"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "throttle" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0.05 and value <= 1.0 then
-                IWin_Settings["RotationThrottle"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Rotation throttle set to " .. value .. " seconds|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid throttle value. Use 0.05-1.0|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Current throttle: " .. IWin_Settings["RotationThrottle"] .. " seconds")
-        end
-    elseif args[1] == "status" then
+
+	-- Try table-driven command lookup
+	elseif IWin.Commands[args[1]] then
+		local cmd = IWin.Commands[args[1]]
+		if cmd.type == "boolean" then
+			self:HandleBooleanCommand(cmd, args[2])
+		elseif cmd.type == "numeric" then
+			self:HandleNumericCommand(cmd, args[2])
+		end
+
+	elseif args[1] == "status" then
         DEFAULT_CHAT_FRAME:AddMessage("|cff0066ffIWin Status:|r")
         DEFAULT_CHAT_FRAME:AddMessage("|cffff8800Toggles:|r")
         DEFAULT_CHAT_FRAME:AddMessage("  Auto-charge: " .. (IWin_Settings["AutoCharge"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
@@ -1558,501 +1632,8 @@ function IWin:Config(msg)
         DEFAULT_CHAT_FRAME:AddMessage("  Sunder stacks: " .. IWin_Settings["SunderStacks"])
         DEFAULT_CHAT_FRAME:AddMessage("  AOE target threshold: " .. IWin_Settings["AOETargetThreshold"] .. " enemies")
         DEFAULT_CHAT_FRAME:AddMessage("  Cached spells: " .. IWin:TableSize(IWin_Settings.SpellCache))
-    elseif args[1] == "bloodrage" then
-        if args[2] == "on" then
-            IWin_Settings["AutoBloodrage"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Auto-bloodrage enabled|r")
-        elseif args[2] == "off" then
-            IWin_Settings["AutoBloodrage"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Auto-bloodrage disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Auto-bloodrage is: " .. (IWin_Settings["AutoBloodrage"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "trinkets" then
-        if args[2] == "on" then
-            IWin_Settings["AutoTrinkets"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Auto-trinkets enabled|r")
-        elseif args[2] == "off" then
-            IWin_Settings["AutoTrinkets"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Auto-trinkets disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Auto-trinkets is: " .. (IWin_Settings["AutoTrinkets"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "rend" then
-        if args[2] == "on" then
-            IWin_Settings["AutoRend"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Auto-rend enabled|r")
-        elseif args[2] == "off" then
-            IWin_Settings["AutoRend"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Auto-rend disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Auto-rend is: " .. (IWin_Settings["AutoRend"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "attack" then
-        if args[2] == "on" then
-            IWin_Settings["AutoAttack"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Auto-attack enabled|r")
-        elseif args[2] == "off" then
-            IWin_Settings["AutoAttack"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Auto-attack disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Auto-attack is: " .. (IWin_Settings["AutoAttack"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "stance" then
-        if args[2] == "on" then
-            IWin_Settings["AutoStance"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Auto-stance switching enabled|r")
-        elseif args[2] == "off" then
-            IWin_Settings["AutoStance"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Auto-stance switching disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Auto-stance is: " .. (IWin_Settings["AutoStance"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "shieldblock" then
-        if args[2] == "on" then
-            IWin_Settings["AutoShieldBlock"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Auto-shield block enabled|r")
-        elseif args[2] == "off" then
-            IWin_Settings["AutoShieldBlock"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Auto-shield block disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Auto-shield block is: " .. (IWin_Settings["AutoShieldBlock"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "chargemax" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageChargeMax"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Charge max rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Charge max rage: " .. IWin_Settings["RageChargeMax"])
-        end
-    elseif args[1] == "bloodragemin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageBloodrageMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Bloodrage min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Bloodrage min rage: " .. IWin_Settings["RageBloodrageMin"])
-        end
-    elseif args[1] == "bloodthirstmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageBloodthirstMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Bloodthirst min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Bloodthirst min rage: " .. IWin_Settings["RageBloodthirstMin"])
-        end
-    elseif args[1] == "mortalstrikemin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageMortalStrikeMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Mortal Strike min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Mortal Strike min rage: " .. IWin_Settings["RageMortalStrikeMin"])
-        end
-    elseif args[1] == "whirlwindmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageWhirlwindMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Whirlwind min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Whirlwind min rage: " .. IWin_Settings["RageWhirlwindMin"])
-        end
-    elseif args[1] == "sweepingmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageSweepingMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Sweeping Strikes min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Sweeping Strikes min rage: " .. IWin_Settings["RageSweepingMin"])
-        end
-    elseif args[1] == "heroicmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageHeroicMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Heroic Strike min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Heroic Strike min rage: " .. IWin_Settings["RageHeroicMin"])
-        end
-    elseif args[1] == "cleavemin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageCleaveMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Cleave min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Cleave min rage: " .. IWin_Settings["RageCleaveMin"])
-        end
-    elseif args[1] == "shoutmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageShoutMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Battle Shout min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Battle Shout min rage: " .. IWin_Settings["RageShoutMin"])
-        end
-    elseif args[1] == "executemin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageExecuteMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Execute min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Execute min rage: " .. IWin_Settings["RageExecuteMin"])
-        end
-    elseif args[1] == "rendmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageRendMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Rend min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Rend min rage: " .. IWin_Settings["RageRendMin"])
-        end
-    elseif args[1] == "laststand" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 99 then
-                IWin_Settings["LastStandThreshold"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Last Stand threshold set to " .. value .. "%|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-99|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Last Stand threshold: " .. IWin_Settings["LastStandThreshold"] .. "%")
-        end
-    elseif args[1] == "refreshrend" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 20 then
-                IWin_Settings["RefreshRend"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Rend refresh time set to " .. value .. "s|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-20|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Rend refresh time: " .. IWin_Settings["RefreshRend"] .. "s")
-        end
-    elseif args[1] == "refreshsunder" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 29 then
-                IWin_Settings["RefreshSunder"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Sunder refresh time set to " .. value .. "s|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-29|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Sunder refresh time: " .. IWin_Settings["RefreshSunder"] .. "s")
-        end
-    elseif args[1] == "refreshthunder" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 25 then
-                IWin_Settings["RefreshThunderClap"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Thunder Clap refresh time set to " .. value .. "s|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-25|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Thunder Clap refresh time: " .. IWin_Settings["RefreshThunderClap"] .. "s")
-        end
-    elseif args[1] == "refreshdemo" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 29 then
-                IWin_Settings["RefreshDemoShout"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Demo Shout refresh time set to " .. value .. "s|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-29|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Demo Shout refresh time: " .. IWin_Settings["RefreshDemoShout"] .. "s")
-        end
-    elseif args[1] == "opwindow" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 10 then
-                IWin_Settings["OverpowerWindow"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Overpower window set to " .. value .. "s|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-10|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Overpower window: " .. IWin_Settings["OverpowerWindow"] .. "s")
-        end
-    elseif args[1] == "sunderstacks" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 5 then
-                IWin_Settings["SunderStacks"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Sunder stack target set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-5|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Sunder stack target: " .. IWin_Settings["SunderStacks"])
-        end
-    elseif args[1] == "skipthunderclap" then
-        if args[2] == "on" then
-            IWin_Settings["SkipThunderClapWithThunderfury"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Skip Thunder Clap with Thunderfury enabled|r")
-        elseif args[2] == "off" then
-            IWin_Settings["SkipThunderClapWithThunderfury"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Skip Thunder Clap with Thunderfury disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Skip Thunder Clap with Thunderfury is: " .. (IWin_Settings["SkipThunderClapWithThunderfury"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "shoutcombatmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageShoutCombatMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Battle Shout min rage (combat) set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Battle Shout min rage (combat): " .. IWin_Settings["RageShoutCombatMin"])
-        end
-    elseif args[1] == "overpowermin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageOverpowerMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Overpower min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Overpower min rage: " .. IWin_Settings["RageOverpowerMin"])
-        end
-    elseif args[1] == "shieldslammin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageShieldSlamMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Shield Slam min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Shield Slam min rage: " .. IWin_Settings["RageShieldSlamMin"])
-        end
-    elseif args[1] == "revengemin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageRevengeMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Revenge min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Revenge min rage: " .. IWin_Settings["RageRevengeMin"])
-        end
-    elseif args[1] == "thunderclapmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageThunderClapMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Thunder Clap min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Thunder Clap min rage: " .. IWin_Settings["RageThunderClapMin"])
-        end
-    elseif args[1] == "demoshoutmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageDemoShoutMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Demo Shout min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Demo Shout min rage: " .. IWin_Settings["RageDemoShoutMin"])
-        end
-    elseif args[1] == "sundermin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageSunderMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Sunder Armor min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Sunder Armor min rage: " .. IWin_Settings["RageSunderMin"])
-        end
-    elseif args[1] == "concussionblowmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageConcussionBlowMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Concussion Blow min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Concussion Blow min rage: " .. IWin_Settings["RageConcussionBlowMin"])
-        end
-    elseif args[1] == "shieldblockmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageShieldBlockMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Shield Block min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Shield Block min rage: " .. IWin_Settings["RageShieldBlockMin"])
-        end
-    elseif args[1] == "concussionblow" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 99 then
-                IWin_Settings["ConcussionBlowThreshold"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Concussion Blow threshold set to " .. value .. "%|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-99|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Concussion Blow threshold: " .. IWin_Settings["ConcussionBlowThreshold"] .. "%")
-        end
-    elseif args[1] == "interrupt" then
-        if args[2] == "on" then
-            IWin_Settings["AutoInterrupt"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Auto-interrupt enabled (SuperWOW only)|r")
-        elseif args[2] == "off" then
-            IWin_Settings["AutoInterrupt"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Auto-interrupt disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Auto-interrupt is: " .. (IWin_Settings["AutoInterrupt"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "smarths" then
-        if args[2] == "on" then
-            IWin_Settings["SmartHeroicStrike"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Smart Heroic Strike enabled (SuperWOW only)|r")
-        elseif args[2] == "off" then
-            IWin_Settings["SmartHeroicStrike"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Smart Heroic Strike disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Smart Heroic Strike is: " .. (IWin_Settings["SmartHeroicStrike"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "revenge" then
-        if args[2] == "on" then
-            IWin_Settings["AutoRevenge"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Auto-revenge enabled (Revenge must be on action bars)|r")
-        elseif args[2] == "off" then
-            IWin_Settings["AutoRevenge"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Auto-revenge disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Auto-revenge is: " .. (IWin_Settings["AutoRevenge"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "interruptmin" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 0 and value <= 100 then
-                IWin_Settings["RageInterruptMin"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Interrupt min rage set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 0-100|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Interrupt min rage: " .. IWin_Settings["RageInterruptMin"])
-        end
-    elseif args[1] == "aoethreshold" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 2 and value <= 10 then
-                IWin_Settings["AOETargetThreshold"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00AOE target threshold set to " .. value .. " enemies|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 2-10|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("AOE target threshold: " .. IWin_Settings["AOETargetThreshold"] .. " enemies")
-        end
-    elseif args[1] == "sunderboss" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 5 then
-                IWin_Settings["SunderStacksBoss"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Boss sunder stacks set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-5|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Boss sunder stacks: " .. IWin_Settings["SunderStacksBoss"])
-        end
-    elseif args[1] == "sundertrash" then
-        if args[2] then
-            local value = tonumber(args[2])
-            if value and value >= 1 and value <= 5 then
-                IWin_Settings["SunderStacksTrash"] = value
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Trash sunder stacks set to " .. value .. "|r")
-            else
-                DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Invalid value. Use 1-5|r")
-            end
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Trash sunder stacks: " .. IWin_Settings["SunderStacksTrash"])
-        end
-    elseif args[1] == "skiprendtrash" then
-        if args[2] == "on" then
-            IWin_Settings["SkipRendOnTrash"] = true
-            DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00Skip Rend on trash enabled|r")
-        elseif args[2] == "off" then
-            IWin_Settings["SkipRendOnTrash"] = false
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000Skip Rend on trash disabled|r")
-        else
-            DEFAULT_CHAT_FRAME:AddMessage("Skip Rend on trash is: " .. (IWin_Settings["SkipRendOnTrash"] and "|cff00ff00ON|r" or "|cffff0000OFF|r"))
-        end
-    elseif args[1] == "debug" then
+
+	elseif args[1] == "debug" then
         DEFAULT_CHAT_FRAME:AddMessage("|cff0066ff=== IWin Debug Info ===|r")
         DEFAULT_CHAT_FRAME:AddMessage("SuperWOW detected: " .. (IWin.superwow and "|cff00ff00YES|r" or "|cffff0000NO|r"))
         DEFAULT_CHAT_FRAME:AddMessage("AutoRevenge enabled: " .. (IWin_Settings["AutoRevenge"] and "|cff00ff00YES|r" or "|cffff0000NO|r"))
