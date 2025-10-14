@@ -1,5 +1,10 @@
 # IWin - One-Button Warrior Rotation Addon
 
+![Tests](https://github.com/propanoid-jpg/IWin/workflows/Tests/badge.svg)
+![Lua Version](https://img.shields.io/badge/lua-5.1-blue.svg)
+![WoW Version](https://img.shields.io/badge/wow-1.12%20vanilla-orange.svg)
+![License](https://img.shields.io/badge/license-Open%20Source-green.svg)
+
 **Version:** 2.6.0
 **Target:** World of Warcraft 1.12 (Vanilla)
 **Author:** Atreyyo @ VanillaGaming.org, Bear-LB @ github.com, Enhanced by Claude

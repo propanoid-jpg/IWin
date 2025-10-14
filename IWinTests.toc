@@ -1,0 +1,9 @@
+## Interface: 11200
+## Title: IWin Tests
+## Notes: Testing framework for IWin addon
+## Author: IWin Contributors
+## Version: 1.0.0
+## Dependencies: IWin
+## SavedVariables: IWinTests_Results
+
+IWinTests.lua

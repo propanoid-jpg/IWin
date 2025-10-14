@@ -1,0 +1,16 @@
+return {
+  _all = {
+    pattern = "%.lua$",
+    ROOT = {"tests/"},
+    verbose = true,
+    coverage = false,
+    ["exclude-tags"] = {"slow", "integration"}
+  },
+  default = {
+    verbose = true,
+  },
+  coverage = {
+    coverage = true,
+    verbose = false,
+  }
+}

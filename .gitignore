@@ -1,5 +1,5 @@
-CLAUDE.md
-TODO.md
+*.md
+!README.md
 .claude
 # Compiled Lua sources
 luac.out

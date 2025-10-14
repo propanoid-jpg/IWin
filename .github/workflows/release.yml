@@ -1,0 +1,146 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 2.6.1)'
+        required: true
+        type: string
+
+jobs:
+  test:
+    name: Pre-release Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: '5.1'
+
+      - name: Setup LuaRocks
+        uses: leafo/gh-actions-luarocks@v4
+
+      - name: Install Busted
+        run: luarocks install busted
+
+      - name: Run full test suite
+        run: busted --verbose tests/
+
+      - name: Verify test results
+        run: echo "✅ All tests passed - ready for release"
+
+  package:
+    name: Create Release Package
+    runs-on: ubuntu-latest
+    needs: [test]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Create release package
+        run: |
+          mkdir -p release/IWin
+
+          # Copy addon files
+          cp IWin.lua release/IWin/
+          cp IWin.toc release/IWin/
+          cp IWinUI.lua release/IWin/
+          cp dmgST.lua release/IWin/
+          cp dmgAOE.lua release/IWin/
+          cp tankST.lua release/IWin/
+          cp tankAOE.lua release/IWin/
+          cp README.md release/IWin/
+
+          # Create zip
+          cd release
+          zip -r IWin-${{ steps.version.outputs.version }}.zip IWin/
+          cd ..
+
+      - name: Create test addon package
+        run: |
+          mkdir -p release/IWinTests
+
+          # Copy test files
+          cp IWinTests.lua release/IWinTests/
+          cp IWinTests.toc release/IWinTests/
+
+          # Create zip
+          cd release
+          zip -r IWinTests-${{ steps.version.outputs.version }}.zip IWinTests/
+          cd ..
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            # Extract latest version changelog
+            sed -n "/^## \[${{ steps.version.outputs.version }}\]/,/^## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
+          else
+            echo "Release ${{ steps.version.outputs.version }}" > release_notes.md
+            echo "" >> release_notes.md
+            echo "See commit history for changes." >> release_notes.md
+          fi
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-packages
+          path: |
+            release/*.zip
+            release_notes.md
+          retention-days: 30
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release/IWin-${{ steps.version.outputs.version }}.zip
+            release/IWinTests-${{ steps.version.outputs.version }}.zip
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    name: Release Notification
+    runs-on: ubuntu-latest
+    needs: [package]
+    if: success()
+
+    steps:
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Success notification
+        run: |
+          echo "🎉 Release v${{ steps.version.outputs.version }} created successfully!"
+          echo "Download: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }}"
