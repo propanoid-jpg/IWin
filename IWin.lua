@@ -981,14 +981,18 @@ end
 -- Throttle rotations to prevent excessive function calls
 function IWin:ShouldThrottle()
     -- Ensure settings are initialized
-    if not IWin_Settings["LastRotationTime"] then
-        IWin_Settings["LastRotationTime"] = 0
-    end
     if not IWin_Settings["RotationThrottle"] then
         IWin_Settings["RotationThrottle"] = 0.1
     end
 
     local currentTime = GetTime()
+
+    -- On first call (LastRotationTime is nil), don't throttle
+    if not IWin_Settings["LastRotationTime"] then
+        IWin_Settings["LastRotationTime"] = currentTime
+        return false
+    end
+
     if currentTime - IWin_Settings["LastRotationTime"] < IWin_Settings["RotationThrottle"] then
         return true
     end

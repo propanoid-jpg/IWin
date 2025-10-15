@@ -10,11 +10,18 @@ require("tests/mock_wow_api")
 -- Simple IWin mock for isolated testing
 local IWin = {
 	ShouldThrottle = function(self)
-		if not IWin_Settings["LastRotationTime"] then
-			IWin_Settings["LastRotationTime"] = 0
+		if not IWin_Settings["RotationThrottle"] then
+			IWin_Settings["RotationThrottle"] = 0.1
 		end
 
 		local currentTime = GetTime()
+
+		-- On first call (LastRotationTime is nil), don't throttle
+		if not IWin_Settings["LastRotationTime"] then
+			IWin_Settings["LastRotationTime"] = currentTime
+			return false
+		end
+
 		if currentTime - IWin_Settings["LastRotationTime"] < IWin_Settings["RotationThrottle"] then
 			return true
 		end
