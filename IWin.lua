@@ -206,6 +206,7 @@ IWinFrame:SetScript("OnEvent", function()
         IWin:InitSetting("AutoAttack", true)
         IWin:InitSetting("AutoStance", true)
         IWin:InitSetting("AutoShieldBlock", true)
+        IWin:InitSetting("AutoShieldBash", true)
         IWin:InitSetting("SkipThunderClapWithThunderfury", true)
         IWin:InitSetting("BattleShoutAOEMode", true)
 
@@ -230,9 +231,10 @@ IWinFrame:SetScript("OnEvent", function()
         IWin:InitSetting("RageRendMin", 10, 0, 100)
         IWin:InitSetting("RageShieldSlamMin", 20, 0, 100)
         IWin:InitSetting("RageRevengeMin", 5, 0, 100)
+        IWin:InitSetting("RageShieldBashMin", 10, 0, 100)
         IWin:InitSetting("RageThunderClapMin", 20, 0, 100)
         IWin:InitSetting("RageDemoShoutMin", 10, 0, 100)
-        IWin:InitSetting("RageSunderMin", 15, 0, 100)
+        IWin:InitSetting("RageSunderMin", 10, 0, 100)
         IWin:InitSetting("RageConcussionBlowMin", 15, 0, 100)
         IWin:InitSetting("RageShieldBlockMin", 10, 0, 100)
         IWin:InitSetting("RageShoutCombatMin", 30, 0, 100)
@@ -924,6 +926,21 @@ function IWin:GetSpell(name)
     return result
 end
 
+-- Check if player is on GCD
+function IWin:IsOnGCD()
+    -- Check if any spell is on GCD by checking a common spell
+    -- We use the first stance as a reliable GCD indicator
+    local stanceID = 1
+    local startTime, duration = GetSpellCooldown(stanceID, "BOOKTYPE_SPELL")
+
+    -- If duration exists and is > 0 but <= GCD_THRESHOLD, we're on GCD
+    if duration and duration > 0 and duration <= IWin.CONSTANTS.GCD_THRESHOLD then
+        return true
+    end
+
+    return false
+end
+
 -- Safely switch to a stance if available and not already in it
 function IWin:SwitchStance(stanceName)
     -- Error handling: validate input
@@ -937,6 +954,11 @@ function IWin:SwitchStance(stanceName)
     end
 
     if not IWin_Settings["AutoStance"] then
+        return false
+    end
+
+    -- Don't switch stances while on GCD (prevents failed casts)
+    if IWin:IsOnGCD() then
         return false
     end
 
@@ -1136,11 +1158,6 @@ end
 
 -- Revenge handler - Uses IsUsableAction to detect proc availability
 function IWin:HandleRevenge()
-    -- Use reactive throttle for Revenge - don't miss procs
-    if IWin:ShouldThrottleReactive() then
-        return false
-    end
-
     if not IWin_Settings["AutoRevenge"] then
         return false
     end
@@ -1169,12 +1186,15 @@ function IWin:HandleRevenge()
     if IWin_Settings["RevengeSlot"] then
         local usable, notEnoughMana = IsUsableAction(IWin_Settings["RevengeSlot"])
         if usable then
+            -- Switch to Defensive Stance for Revenge
+            self:SwitchStance("Defensive Stance")
             CastSpellByName("Revenge")
             return true
         end
     else
         -- Fallback: if Revenge not on bars, try casting anyway (will fail if no proc)
         -- This maintains backward compatibility
+        self:SwitchStance("Defensive Stance")
         CastSpellByName("Revenge")
         return true
     end
