@@ -31,7 +31,7 @@ A sophisticated one-button rotation addon for Warriors that provides intelligent
 - [Boss Detection](#boss-detection)
 - [Performance](#performance)
 - [Troubleshooting](#troubleshooting)
-- [Version History](#version-history)
+- [Testing](#testing)
 - [Credits](#credits)
 
 ---
@@ -44,6 +44,7 @@ A sophisticated one-button rotation addon for Warriors that provides intelligent
 - **Automatic Stance Dancing**: Seamlessly switches between Battle/Defensive/Berserker stances as needed
 - **Debuff & Buff Management**: Tracks and maintains Rend, Sunder Armor, Thunder Clap, Demoralizing Shout, Battle Shout
 - **Boss Detection**: Automatically adjusts thresholds for bosses vs trash mobs
+- **Comprehensive Testing**: 55+ tests (in-game and external) with CI/CD integration
 
 ### SuperWOW Enhancements
 When running on SuperWOW, IWin automatically enables:
@@ -65,6 +66,12 @@ When running on SuperWOW, IWin automatically enables:
 - **Configurable Throttling**: Adjustable rotation check frequency (0.05-1.0 seconds)
 - **Efficient Debuff Tracking**: Client-side duration tracking reduces server queries
 - **Smart Ability Queueing**: Minimizes wasted GCDs and rage expenditure
+
+### Development & Quality
+- **Testing Framework**: Hybrid testing approach with in-game and external tests
+- **CI/CD Pipeline**: Automated testing on GitHub Actions with coverage reporting
+- **Linting**: Code quality checks with luacheck
+- **Documentation**: Comprehensive guides (README, CLAUDE.md, TESTING.md, BOSSES.md)
 
 ---
 
@@ -90,6 +97,8 @@ When running on SuperWOW, IWin automatically enables:
                ├── tankST.lua
                ├── tankAOE.lua
                ├── IWinUI.lua
+               ├── IWinTests.lua (optional - for testing)
+               ├── IWinTests.toc (optional - for testing)
                └── README.md
    ```
 
@@ -618,6 +627,41 @@ Sunder Target: 5 stacks (boss mode)
 
 ---
 
+## Testing
+
+IWin includes a comprehensive testing framework to ensure reliability and quality.
+
+### Running Tests
+
+**In-Game Tests:**
+```
+/iwintests
+```
+Runs 30+ smoke tests and integration tests inside WoW.
+
+**External Tests (Developer):**
+```bash
+# Windows
+run_tests.bat
+
+# Linux/Mac
+./run_tests.sh
+
+# Or directly
+busted tests/
+```
+
+For detailed testing documentation, see [TESTING.md](TESTING.md).
+
+### Test Coverage
+- **55+ total tests** (30 in-game, 25+ external)
+- **Smoke tests**: Addon loading, constants, settings
+- **Unit tests**: Boss detection, throttling, target validation
+- **Integration tests**: Rotation execution, spell cache
+- **CI/CD**: Automated testing on every commit via GitHub Actions
+
+---
+
 ## Credits
 
 ### Original Development
@@ -627,7 +671,7 @@ Sunder Target: 5 stacks (boss mode)
 - **Bear-LB @ github.com** - Fork maintainer, feature additions
 
 ### Enhancement & Modernization
-- **Claude (Anthropic AI)** - Code refactoring, SuperWOW integration, performance optimizations, configuration system, comprehensive documentation, bug fixes
+- **Claude (Anthropic AI)** - Code refactoring, SuperWOW integration, performance optimizations, configuration system, testing framework, comprehensive documentation, bug fixes
 ---
 
 ## License
