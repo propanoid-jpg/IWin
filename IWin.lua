@@ -263,12 +263,23 @@ IWinFrame:SetScript("OnEvent", function()
         IWin:InitSetting("SunderStacks", 5, 1, 5)
         IWin:InitSetting("HeroicStrikeQueueWindow", 0.5, 0.1, 2.0)
         IWin:InitSetting("AOETargetThreshold", 3, 2, 10)  -- Min enemies for AOE abilities
+
+        -- UI settings
+        IWin:InitSetting("ShowMinimapButton", true)
+        IWin:InitSetting("MinimapButtonAngle", 200, 0, 360)
+
         DEFAULT_CHAT_FRAME:AddMessage("|cff0066ff========================================|r")
         DEFAULT_CHAT_FRAME:AddMessage("|cff0066ff IWin v2.6.0 loaded successfully!|r")
         DEFAULT_CHAT_FRAME:AddMessage("|cffff8800 Client:|r " .. (IWin.superwow and "|cff00ff00SuperWOW Enhanced|r" or "|cffff8800Vanilla|r"))
         DEFAULT_CHAT_FRAME:AddMessage("|cffff8800 Rotations:|r |cffffffff/dmgst, /dmgaoe, /tankst, /tankaoe|r")
         DEFAULT_CHAT_FRAME:AddMessage("|cffff8800 Commands:|r |cffffffff/iwin, /iwinhelp|r")
         DEFAULT_CHAT_FRAME:AddMessage("|cff0066ff========================================|r")
+
+        -- Create minimap button
+        if IWin.UI and IWin.UI.CreateMinimapButton then
+            IWin.UI:CreateMinimapButton()
+        end
+
         IWinFrame:UnregisterEvent("ADDON_LOADED")
     elseif event == "CHAT_MSG_COMBAT_SELF_MISSES" then
         -- Combat log for dodge/parry detection (enemy misses YOU)
